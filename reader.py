@@ -1,6 +1,7 @@
 from openpyxl import load_workbook
 import re
 import utils
+from format import Course
 
 
 class Reader:
@@ -22,7 +23,7 @@ class Reader:
             #TODO: Why first two indexes are missed? [Add Documentation]
             for subject in row[2:]:
                 if subject:
-                    subjects.append(subject)
+                    subjects.append(subject.strip())
 
         if sections:
             return subjects
@@ -61,11 +62,11 @@ class Reader:
         return tuple(sections)
 
     def display_courses(self, sections=True):
-        for i in self.get_courses(section=sections):
+        for i in self.get_courses(sections=sections):
             section = self.get_section(i)
             if section:
-                print(section)
-            else:  # When no sections are found for the course
+                print(i)
+            else:  # When no sections are found for the course, Probably a MS-Course
                 print(i)
 
     def get_days_info(self):
@@ -85,6 +86,7 @@ class Reader:
 
     def get_timing(self, course_name):
         DAYS_INFO = self.get_days_info()
+        meta_info = {"name": course_name, "section": self.get_section(course_name), "timing": [], "room": [],"days": []}
 
         # TODO: Simplify this logic
         for day in self.DAYS:
@@ -99,27 +101,32 @@ class Reader:
                                 course_name, index)
                             course_end_timing = utils.generate_end_time(
                                 course_start_timing)
-                            print(
-                                f'Day: {day_name}\nTimings: <{course_start_timing} - {course_end_timing}>\nVenue: <{self.get_venue(DAYS_INFO[day_name][col])}>'
-                            )
-                            return (day_name, col, index)
+                            meta_info['timing'].append(f'{course_start_timing} - {course_end_timing}')
+                            meta_info['room'].append(self.get_venue(DAYS_INFO[day_name][col]))
+                            meta_info['days'].append(day_name)
+                            # print(
+                            #     f'Day: {day_name}\nTimings: <{course_start_timing} - {course_end_timing}>\nVenue: <{self.get_venue(DAYS_INFO[day_name][col])}>'
+                            # )
+                            # return (day_name, col, index)
+        return meta_info
 
     def get_info(self, section=None):
-        # my_courses =
         COURSES = self.get_courses()
 
         for i in COURSES:
-            print(f"Course: {i}")
-            self.get_timing(i)
-            print()
+            print(Course.from_dict(self.get_timing(i)))
+            # input()
+            # print(f"Course: {i}")
+            # Course(name=i, section=self.get_section(i), timing=self.get_timing(i), room=, days=)
+            # self.get_timing(course_name=i)
+            # print()
 
 
 if __name__ == "__main__":
 
     abc = Reader('cs.xlsx')
-    # for course in abc.get_courses():
-    #     print(course)
-
+    # abc.display_courses()    
+    
     # while (1):
     # name = input("Please enter course name: ")
     # abc.get_timing(name)

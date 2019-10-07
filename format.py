@@ -1,5 +1,6 @@
 class Course:
-    def __init__(self, name: string, section: string, timing: tuple, room: tuple, days: tuple):
+    def __init__(self, name: str, section: str, timing: list, room: list,
+                 days: list):
         '''
         @args:
         Name: Name of the course
@@ -20,11 +21,20 @@ class Course:
         self.days = days
         self.course_type = 'BS' if 'MS' not in self.name else 'MS'
 
+    @classmethod
+    def from_dict(cls, mydict):
+        return cls(name=mydict["name"],
+                   section=mydict["section"],
+                   timing=mydict["timing"],
+                   room=mydict["room"],
+                   days=mydict["days"])
+
     def is_lab_course(self):
         return 'lab' in self.name.lower()
-    
+
     def __repr__(self):
-        return f'{self.name - self.section}'
-    
+        return f'{self.name} - {self.section}'
+
     def __str__(self):
-        return f'{self.name - self.section}'
+        d = ', '.join(self.days)
+        return f'{self.name} - {self.section} - {d}'
