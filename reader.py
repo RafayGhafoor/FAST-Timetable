@@ -86,35 +86,57 @@ class Reader:
 
     def get_timing(self, course_name):
         DAYS_INFO = self.get_days_info()
-        meta_info = {"name": course_name, "section": self.get_section(course_name), "timing": [], "room": [],"days": []}
+        meta_info = {
+            "name": course_name,
+            "section": [],
+            "timing": [],
+            "room": [],
+            "days": []
+        }
 
         # TODO: Simplify this logic
         for day in self.DAYS:
             for column in range(len(DAYS_INFO[day])):
-                for n, i in enumerate(DAYS_INFO[day][column]):
-                    if i:
-                        if i == course_name:
-                            day_name = day
-                            col = column
-                            index = n
+                for index, course_title in enumerate(DAYS_INFO[day][column]):
+                    if course_title:
+                        if course_name in course_title:
+                            # if i == course_name:
+                            meta_info["section"] = self.get_section(
+                                course_title)
+
                             course_start_timing = self.get_course_time(
                                 course_name, index)
-                            course_end_timing = utils.generate_end_time(
-                                course_start_timing)
-                            meta_info['timing'].append(f'{course_start_timing} - {course_end_timing}')
-                            meta_info['room'].append(self.get_venue(DAYS_INFO[day_name][col]))
-                            meta_info['days'].append(day_name)
-                            # print(
-                            #     f'Day: {day_name}\nTimings: <{course_start_timing} - {course_end_timing}>\nVenue: <{self.get_venue(DAYS_INFO[day_name][col])}>'
-                            # )
-                            # return (day_name, col, index)
-        return meta_info
 
-    def get_info(self, section=None):
-        COURSES = self.get_courses()
+                            is_lab_course = True if 'lab' in course_title.lower(
+                            ) else False
+
+                            course_end_timing = utils.generate_end_time(
+                                course_start_timing, lab_course=is_lab_course)
+
+                            meta_info[
+                                'timing'] = f'{course_start_timing} - {course_end_timing}'
+
+                            meta_info['room'] = self.get_venue(
+                                DAYS_INFO[day][column])
+
+                            meta_info['days'] = day
+
+                            print(
+                                f'Name: {course_title}\nSection: {meta_info["section"]}\nDay: {day}\nTimings: <{course_start_timing} - {course_end_timing}>\nVenue: <{self.get_venue(DAYS_INFO[day][column])}>\n\n'
+                            )
+                            # return (day, col, index)
+        # return meta_info
+
+    def get_info(self, courses=None):
+        if courses:
+            COURSES = courses
+        else:
+            COURSES = self.get_courses()
 
         for i in COURSES:
-            print(Course.from_dict(self.get_timing(i)))
+            self.get_timing(i)
+            input()
+            # print(Course.from_dict(self.get_timing(i)))
             # input()
             # print(f"Course: {i}")
             # Course(name=i, section=self.get_section(i), timing=self.get_timing(i), room=, days=)
@@ -123,14 +145,18 @@ class Reader:
 
 
 if __name__ == "__main__":
+    courses = ("Discrete Structures", "Linear Algebra",
+               "Comp. Organization and Assembly Lang", "Data Structures",
+               "Finance and Accounting")
 
     abc = Reader('cs.xlsx')
-    # abc.display_courses()    
-    
+    abc.get_info(courses=courses)
+
+    # abc.display_courses()
+
     # while (1):
     # name = input("Please enter course name: ")
     # abc.get_timing(name)
 
     # for i in abc.filter_courses():
     #     print(i)
-    abc.get_info()

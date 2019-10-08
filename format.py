@@ -1,6 +1,6 @@
 class Course:
-    def __init__(self, name: str, section: str, timing: list, room: list,
-                 days: list):
+    def __init__(self, name: str, section: str, timing: str, room: str,
+                 day: str):
         '''
         @args:
         Name: Name of the course
@@ -13,6 +13,7 @@ class Course:
         section: CS-A
         timing: ((9:30, 10:50),(...))
         room: (CS-2)
+        day: Monday
         '''
         self.name = name
         self.section = section
