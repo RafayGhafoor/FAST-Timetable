@@ -1,3 +1,7 @@
 *.xlsx
 .vscode/
 __pycache__/
+frontend/
+source_files/
+course_files/
+*.sqlite

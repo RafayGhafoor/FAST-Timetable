@@ -1,11 +1,25 @@
 from openpyxl import load_workbook
 import re
+import os
+from pony.orm import *
+
 import utils
 from format import Course
 
+db = Database()
+
+
+class DBCourse(db.Entity):
+    name = Required(str)
+    section = Required(str)
+    start_time = Required(float)
+    end_time = Required(float)
+    room = Required(str)
+    day = Required(str)
+
 
 class Reader:
-    DAYS = ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+    DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
 
     def __init__(self, filename):
         self.info = list(load_workbook(filename=filename).active.values)
@@ -14,13 +28,13 @@ class Reader:
         self.content = self.info[4:-3]
 
     def get_courses(self, sections=True):
-        '''
+        """
         Extracts all courses from xlsx file which are being offered.
-        '''
+        """
         subjects = []
 
         for row in self.content:
-            #TODO: Why first two indexes are missed? [Add Documentation]
+            # TODO: Why first two indexes are missed? [Add Documentation]
             for subject in row[2:]:
                 if subject:
                     subjects.append(subject.strip())
@@ -28,26 +42,28 @@ class Reader:
         if sections:
             return subjects
 
-        return sorted({i.split('(')[0].strip() for i in subjects})
+        return sorted({i.split("(")[0].strip() for i in subjects})
 
     def get_course_time(self, name, sheet_location):
-        '''
+        """
         Obtain lecture timings for course.
 
         @args:
             name: Name of the course
             sheet_location: index of name in sheet (required to interpret lecture timing)
-        '''
+        """
         if not self.timings[sheet_location]:
             for i in range(sheet_location)[::-1]:
                 if self.timings[i]:
                     time, interval = self.timings[i].split()
-                    hour, minute = [int(i) for i in time.split(':')]
+                    interval = interval.replace('.', '').upper()
+                    hour, minute = [int(i) for i in time.split(":")]
                     minute += self.periods[sheet_location - 1]
-                    time = f'{hour}:{str(minute).zfill(2)} {interval}'
+                    time = f"{hour}:{str(minute).zfill(2)} {interval.replace('NOON', 'PM')}"
                     break
         else:
-            time = self.timings[sheet_location]
+            time = self.timings[sheet_location].replace(
+                '.', '').upper().replace('NOON', 'PM')
 
         return time
 
@@ -55,11 +71,11 @@ class Reader:
         return content[1]
 
     def get_section(self, name):
-        '''
+        """
         Obtain section from course name.
-        '''
-        sections = re.findall(r'CS-?\w?\d?', name)
-        return tuple(sections)
+        """
+        sections = re.findall(r"CS-?\w?\d?", name)
+        return ", ".join(sections)
 
     def display_courses(self, sections=True):
         for i in self.get_courses(sections=sections):
@@ -84,79 +100,105 @@ class Reader:
 
         return DAYS_INFO
 
-    def get_timing(self, course_name):
+    @db_session
+    def dump_to_db(self):
+        """
+        Returns list of course objects
+        """
         DAYS_INFO = self.get_days_info()
-        meta_info = {
-            "name": course_name,
-            "section": [],
-            "timing": [],
-            "room": [],
-            "days": []
-        }
-
         # TODO: Simplify this logic
         for day in self.DAYS:
             for column in range(len(DAYS_INFO[day])):
                 for index, course_title in enumerate(DAYS_INFO[day][column]):
-                    if course_title:
-                        if course_name in course_title:
-                            # if i == course_name:
-                            meta_info["section"] = self.get_section(
-                                course_title)
+                    if course_title and ' (' in course_title:
+                        # https://stackoverflow.com/questions/1546226/simple-way-to-remove-multiple-spaces-in-a-string
+                        course_title = " ".join(course_title.split())
 
-                            course_start_timing = self.get_course_time(
-                                course_name, index)
+                        course_start_timing = self.get_course_time(
+                            course_title, index)
 
-                            is_lab_course = True if 'lab' in course_title.lower(
-                            ) else False
+                        is_lab_course = True if "lab" in course_title.lower(
+                        ) else False
 
-                            course_end_timing = utils.generate_end_time(
-                                course_start_timing, lab_course=is_lab_course)
+                        course_end_timing = utils.generate_end_time(
+                            course_start_timing, lab_course=is_lab_course)
 
-                            meta_info[
-                                'timing'] = f'{course_start_timing} - {course_end_timing}'
+                        section = self.get_section(course_title)
 
-                            meta_info['room'] = self.get_venue(
-                                DAYS_INFO[day][column])
+                        try:
+                            DBCourse(
+                                name=course_title,
+                                section='CS' if not section else section,
+                                start_time=utils.convert_to_24h(
+                                    course_start_timing),
+                                end_time=utils.convert_to_24h(
+                                    course_end_timing),
+                                room=self.get_venue(DAYS_INFO[day][column]),
+                                day=day, )
+                        except Exception as e:
+                            print(e)
 
-                            meta_info['days'] = day
 
-                            print(
-                                f'Name: {course_title}\nSection: {meta_info["section"]}\nDay: {day}\nTimings: <{course_start_timing} - {course_end_timing}>\nVenue: <{self.get_venue(DAYS_INFO[day][column])}>\n\n'
-                            )
-                            # return (day, col, index)
-        # return meta_info
+def export_timetable(export_directory, courses=None, dump_type="json"):
+    if dump_type == "json":
+        export_directory += "json/"
+    else:
+        export_directory += "text/"
 
-    def get_info(self, courses=None):
-        if courses:
-            COURSES = courses
-        else:
-            COURSES = self.get_courses()
+    with db_session:
+        my_dict = {}
 
-        for i in COURSES:
-            self.get_timing(i)
-            input()
-            # print(Course.from_dict(self.get_timing(i)))
-            # input()
-            # print(f"Course: {i}")
-            # Course(name=i, section=self.get_section(i), timing=self.get_timing(i), room=, days=)
-            # self.get_timing(course_name=i)
-            # print()
+        for course in select(c for c in DBCourse)[:]:
+            for entity in courses:
+                # print("%r - %r" % (entity, course.name))
+                if entity in course.name:
+                    section = re.search(r'CS-\w', course.section)
+                    section = section.group() if section else course.section
+
+                    export_entity = Course(
+                        course.name, course.room, course.day, course.section,
+                        utils.convert_to_12h(course.start_time),
+                        utils.convert_to_12h(course.end_time))
+
+                    if section not in my_dict.keys():
+                        my_dict[section] = []
+
+                    if dump_type == "json":
+                        my_dict[section].append(export_entity.to_dict())
+                    else:
+                        my_dict[section].append(export_entity.get_text())
+
+        for k, v in my_dict.items():
+            if dump_type == "json":
+                export_entity.write_to_file(
+                    export_directory + k + ".json", data=v, dump_type=dump_type)
+            else:
+                export_entity.write_to_file(
+                    export_directory + k + ".txt", data=v, dump_type=dump_type)
 
 
 if __name__ == "__main__":
-    courses = ("Discrete Structures", "Linear Algebra",
-               "Comp. Organization and Assembly Lang", "Data Structures",
-               "Finance and Accounting")
 
-    abc = Reader('cs.xlsx')
-    abc.get_info(courses=courses)
+    files_path = "source_files/"
+    output_path = "course_files/"
+    test_files = {"old": "old.xlsx", "new": "new.xlsx"}
+    timetable = Reader(files_path + test_files.get("old"))
+    db.bind(provider="sqlite", filename="database_mod.sqlite", create_db=True)
+    db.generate_mapping(create_tables=True)
 
-    # abc.display_courses()
+    # timetable.dump_to_db()
+    # timetable.display_courses()
 
-    # while (1):
-    # name = input("Please enter course name: ")
-    # abc.get_timing(name)
+    courses = ('Discrete', 'Data Structures', 'Assembly',
+               'Finance and Accounting', 'Linear Algebra')
 
-    # for i in abc.filter_courses():
-    #     print(i)
+    # Cleanup
+    for i in os.listdir(output_path):
+        if os.path.isfile(i):
+            os.remove(output_path + i)
+
+    print("Extracting timetable for given courses:")
+    for i in courses:
+        print(">>> ", i)
+
+    export_timetable(output_path, courses=courses, dump_type='text')
