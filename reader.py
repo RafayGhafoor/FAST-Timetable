@@ -62,7 +62,7 @@ class Reader:
                     interval = interval.replace(".", "").upper()
                     hour, minute = [int(i) for i in time.split(":")]
                     minute += self.periods[sheet_location - 1]
-                    time = f"{hour}:{str(minute).zfill(2)} {interval.replace('NOON', 'PM')}"
+                    time = f"{str(hour).zfill(2)}:{str(minute).zfill(2)} {interval.replace('NOON', 'PM')}"
                     break
         else:
             time = (
@@ -71,8 +71,9 @@ class Reader:
                 .upper()
                 .replace("NOON", "PM")
             )
+            time = ":".join([i.zfill(2) for i in time.split(":")])
 
-        return time
+        return time.strip()
 
     def get_venue(self, content):
         return content[1]
@@ -82,7 +83,7 @@ class Reader:
         Obtain section from course name.
         """
         sections = re.findall(r"[BM]?CS-?\d?\w?\d?", name)
-        print(name, sections)
+        # print(name, sections)
         return ", ".join(sections)
 
     def display_courses(self, sections=True):
@@ -209,13 +210,14 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
 
             elif dump_type == "md":
                 with open(export_directory + k + ".md", "a") as f:
-                    f.write(f"# Timetable for {k}\n")
+                    f.write(f"\n\n# Timetable for {k}\n\n")
                     f.write(
                         """| Subject                           | Venue | Day       | Timing     |
 | --------------------------------- | ----- | --------- |:----------:|\n"""
                     )
                     for i in v:
                         f.write(i)
+                    f.write("\n")
 
 
 if __name__ == "__main__":
@@ -235,15 +237,24 @@ if __name__ == "__main__":
     # timetable.dump_to_db()
     # timetable.display_courses()
 
+    # courses = (
+    #     "Discrete",
+    #     "Data Structures",
+    #     "Assembly",
+    #     "Communication & Presentation",
+    #     "Pakistan Studies",
+    #     "Com & Presentation",
+    # )
+
     courses = (
-        "Database Systems",
         "Operating Systems",
-        "Design & Analysis of Algorithm",
+        "Mass Communication",
         "Probability & Statistics",
-        "Psychology",
         "Environmental Studies",
         "Principles of Leadership",
-        "Mass Communication",
+        "Design & Analysis of Algorithms",
+        "Psychology",
+        "Database Systems",
     )
 
     # Cleanup

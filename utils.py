@@ -27,7 +27,7 @@ def generate_end_time(start_time, lab_course=False):
             interval = "PM"
         if hour + 3 > 12:
             hour -= 12
-        return f"{hour+3}:{str(minute).zfill(2)} {interval}"
+        return f"{str(hour+3).zfill(2)}:{str(minute).zfill(2)} {interval}"
 
     if hour >= 12:
         hour = 0
@@ -38,4 +38,4 @@ def generate_end_time(start_time, lab_course=False):
         hour += 1
         minute -= 60
 
-    return f"{hour}:{str(minute).zfill(2)} {interval}"
+    return f"{str(hour).zfill(2)}:{str(minute).zfill(2)} {interval}"

@@ -58,7 +58,7 @@ class Course:
         }
 
     def to_md(self):
-        return f"{self.name.split('(')[0].strip(): <40} | {self.room: <13} | {self.day: <11} | {self.start_time: <9} - {self.end_time: <9} |\n"
+        return f"{self.name.split('(')[0].strip(): <50} | {self.room: <23} | {self.day: <11} | {self.start_time: <25} - {self.end_time: <25} |\n"
 
     def to_json(self, filename=None, data=None):
         if data:
