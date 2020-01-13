@@ -1,11 +1,3 @@
----
-title: FAST Time Table (\today{})
-geometry: margin=2cm
-header-includes:
-    - \usepackage{setspace}
-    - \doublespacing
-    - \usepackage{lineno}
----
 
 
 # Timetable for BCS-4A
@@ -179,3 +171,11 @@ Design & Analysis of Algorithms                    | CS-9                    | T
 | --------------------------------- | ----- | --------- |:----------:|
 Advanced Operating Systems                         | CS-1                    | Thursday    | 11:00 AM                  - 12:20 AM                  |
 
+---
+title: FAST Time Table (\today{})
+geometry: margin=2cm
+header-includes:
+    - \usepackage{setspace}
+    - \doublespacing
+    - \usepackage{lineno}
+---
