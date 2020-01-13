@@ -212,7 +212,7 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
                 with open(export_directory + k + ".md", "a") as f:
                     f.write(f"\n\n# Timetable for {k}\n\n")
                     f.write(
-                        """| Subject                           | Venue | Day       | Timing     |
+                        """| **Subject**                           | **Venue** | **Day**       | **Timing**     |
 | --------------------------------- | ----- | --------- |:----------:|\n"""
                     )
                     for i in v:
