@@ -22,9 +22,9 @@ python reader.py
 
 cd $path
 
-echo "$template" >timetable_mod.md
-
 cat *.md >>timetable.md
+
+echo "$template" >timetable_mod.md
 
 cat *.md >>timetable_mod.md
 
