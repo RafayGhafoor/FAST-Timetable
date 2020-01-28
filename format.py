@@ -67,7 +67,6 @@ class Course:
             json.dump(self.to_dict(), filename, indent=4)
 
     def write_to_file(self, file_path=".", mode="a", data=None, dump_type="text"):
-
         with open(file_path, mode) as f:
             if dump_type == "json":
                 self.to_json(f, data=data)

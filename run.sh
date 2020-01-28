@@ -22,14 +22,12 @@ python reader.py
 
 cd $path
 
-cat *.md >>timetable.md
+cat BC*.md >>timetable.md
 
-echo "$template" >timetable_mod.md
+echo "$template" > timetable_mod.md
 
-cat *.md >>timetable_mod.md
+cat BC*.md >>timetable_mod.md
 
 pandoc -s -o timetable.pdf timetable_mod.md -V papersize:a4
-
-rm timetable_mod.md
 
 setsid xdg-open timetable.pdf

@@ -237,25 +237,26 @@ if __name__ == "__main__":
     # timetable.dump_to_db()
     # timetable.display_courses()
 
-    # courses = (
-    #     "Discrete",
-    #     "Data Structures",
-    #     "Assembly",
-    #     "Communication & Presentation",
-    #     "Pakistan Studies",
-    #     "Com & Presentation",
-    # )
-
     courses = (
-        "Operating Systems",
-        "Mass Communication",
-        "Probability & Statistics",
-        "Environmental Studies",
-        "Principles of Leadership",
-        "Design & Analysis of Algorithms",
-        "Psychology",
-        "Database Systems",
+        "Discrete Structures (BCS-4A)",
+        "Data Structures (BCS-4C)",
+        "Data Structures Lab (BCS-4C",
+        "Assembly L. (BCS-4A)",
+        "Assembly Lang. Lab (BCS-4A",
+        "Entrepreneurship (BCS-4A)",
+        "Probability & Statistics (BCS-4C)"
     )
+
+    # courses = (
+    #     "Operating Systems",
+    #     "Mass Communication",
+    #     "Probability & Statistics",
+    #     "Environmental Studies",
+    #     "Principles of Leadership",
+    #     "Design & Analysis of Algorithms",
+    #     "Psychology",
+    #     "Database Systems",
+    # )
 
     # Cleanup
     # for i in os.listdir(output_path):
