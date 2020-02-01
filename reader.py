@@ -5,13 +5,13 @@ from pony.orm import *
 
 import utils
 
-from format import Course
+from format import Course as Subject
 from page_generator import *
 
 db = Database()
 
 
-class DBCourse(db.Entity):
+class Course(db.Entity):
     name = Required(str)
     section = Required(str)
     start_time = Required(str)
@@ -83,7 +83,7 @@ class Reader:
         Obtain section from course name.
         """
         sections = re.findall(r"[BM]?CS-?\d?\w?\d?", name)
-        # print(name, sections)
+        print(name, sections)
         return ", ".join(sections)
 
     def display_courses(self, sections=True):
@@ -133,8 +133,8 @@ class Reader:
                         section = self.get_section(course_title)
 
                         try:
-                            DBCourse(
-                                name=course_title,
+                            Course(
+                                name=course_title.replace(section, '')[:-2].strip(),
                                 section="MCS" if not section else section,
                                 start_time=course_start_timing,
                                 end_time=course_end_timing,
@@ -159,7 +159,7 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
         # section_timing = {}
 
         for course in sorted(
-            select(c for c in DBCourse)[:], key=lambda x: DAYS.index(x.day)
+            select(c for c in Course)[:], key=lambda x: DAYS.index(x.day)
         ):
             for entity in courses:
                 # print("%r - %r" % (entity, course.name))
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     )
     db.generate_mapping(create_tables=True)
 
-    # timetable.dump_to_db()
+    timetable.dump_to_db()
     # timetable.display_courses()
 
     courses = (
@@ -244,7 +244,7 @@ if __name__ == "__main__":
         "Assembly L. (BCS-4A)",
         "Assembly Lang. Lab (BCS-4A",
         "Entrepreneurship (BCS-4A)",
-        "Probability & Statistics (BCS-4C)"
+        "Probability & Statistics (BCS-4C)",
     )
 
     # courses = (
@@ -263,9 +263,9 @@ if __name__ == "__main__":
     #     if os.path.isfile(i):
     #         os.remove(output_path + i)
 
-    print("Extracting timetable for given courses:")
-    for i in courses:
-        print(">>> ", i)
+    # print("Extracting timetable for given courses:")
+    # for i in courses:
+    #     print(">>> ", i)
 
-    export_timetable(output_path, courses=courses, dump_type="md")
+    # export_timetable(output_path, courses=courses, dump_type="md")
 
