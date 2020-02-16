@@ -11,13 +11,17 @@ from page_generator import *
 db = Database()
 
 
-class Course(db.Entity):
+class Courses(db.Entity):
     name = Required(str)
     section = Required(str)
     start_time = Required(str)
     end_time = Required(str)
     room = Required(str)
     day = Required(str)
+
+
+class CoursesInfo(db.Entity):
+    name = Required(str)
 
 
 DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
@@ -30,6 +34,7 @@ class Reader:
         self.timings = self.info[3]
         self.content = self.info[4:-3]
 
+    @db_session
     def get_courses(self, sections=True):
         """
         Extracts all courses from xlsx file which are being offered.
@@ -45,6 +50,8 @@ class Reader:
         if sections:
             return subjects
 
+        for i in sorted({i.split("(")[0].strip() for i in subjects}):
+            CoursesInfo(name=i)
         return sorted({i.split("(")[0].strip() for i in subjects})
 
     def get_course_time(self, name, sheet_location):
@@ -133,8 +140,9 @@ class Reader:
                         section = self.get_section(course_title)
 
                         try:
-                            Course(
-                                name=course_title.replace(section, '')[:-2].strip(),
+                            Courses(
+                                name=course_title,
+                                # name=course_title[: course_title.find("(")],
                                 section="MCS" if not section else section,
                                 start_time=course_start_timing,
                                 end_time=course_end_timing,
@@ -157,17 +165,20 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
     with db_session:
         my_dict = {}
         # section_timing = {}
+        a = sorted(
+            select(c for c in Courses)[:], key=lambda x: DAYS.index(x.day)
+        )
 
-        for course in sorted(
-            select(c for c in Course)[:], key=lambda x: DAYS.index(x.day)
-        ):
+        b = sorted(a, key=lambda x: int(utils.convert_to_24h(x.start_time)))
+
+        for course in b:
             for entity in courses:
                 # print("%r - %r" % (entity, course.name))
                 if entity in course.name:
                     section = re.search(r"[BM]?CS-?\d?\w?", course.section)
                     section = section.group() if section else course.section
 
-                    export_entity = Course(
+                    export_entity = Subject(
                         course.name,
                         course.room,
                         course.day,
@@ -178,12 +189,6 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
 
                     if section not in my_dict.keys():
                         my_dict[section] = []
-                        # if "total_hours" not in  section_timing[section]:
-                        #     section_timing[section] = {"total_hours": None, "consumed_hours"}
-                        # section_timing[section]["consumed_hours"] = course.end_time - course.start_time
-
-                    # else:
-                    #     section_timing[section]["consumed_hours"] += course.end_time - course.start_time
 
                     if dump_type == "json":
                         my_dict[section].append(export_entity.to_dict())
@@ -194,7 +199,7 @@ def export_timetable(export_directory, courses=None, dump_type="json"):
                     elif dump_type == "md":
                         my_dict[section].append(export_entity.to_md())
 
-        for k, v in my_dict.items():
+        for k, v in sorted(my_dict.items()):
             if dump_type == "json":
                 export_entity.write_to_file(
                     export_directory + k + ".json", data=v, dump_type=dump_type
@@ -224,8 +229,8 @@ if __name__ == "__main__":
 
     files_path = "source_files/"
     output_path = "course_files/"
-    timetable_files = {"old": "old.xlsx", "new": "new.xlsx"}
-    selected_timetable = timetable_files.get("new")
+    timetable_files = {"old": "old.xlsx", "new": "new.xlsx", "latest": "latest.xlsx"}
+    selected_timetable = timetable_files.get("latest")
     timetable = Reader(files_path + selected_timetable)
     db.bind(
         provider="sqlite",
@@ -233,8 +238,8 @@ if __name__ == "__main__":
         create_db=True,
     )
     db.generate_mapping(create_tables=True)
-
-    timetable.dump_to_db()
+    # timetable.get_courses(sections=False)
+    # timetable.dump_to_db()
     # timetable.display_courses()
 
     courses = (
@@ -244,7 +249,7 @@ if __name__ == "__main__":
         "Assembly L. (BCS-4A)",
         "Assembly Lang. Lab (BCS-4A",
         "Entrepreneurship (BCS-4A)",
-        "Probability & Statistics (BCS-4C)",
+        "Probability & Statistics (BCS-4A)",
     )
 
     # courses = (
@@ -267,5 +272,5 @@ if __name__ == "__main__":
     # for i in courses:
     #     print(">>> ", i)
 
-    # export_timetable(output_path, courses=courses, dump_type="md")
+    export_timetable(output_path, courses=courses, dump_type="md")
 
